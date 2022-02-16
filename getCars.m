@@ -1,5 +1,5 @@
-function [carList, road] = getCars(density, lanes, roadLen, randomPos, randomLane, troedelMax)
-%getCars Liefert eine Liste von 'car' Objekten zurück.
+function [carList, road] = getCars(density, lanes, roadLen, randomPos, randomLane, pHesitationMax)
+%getCars returns a list of 'car' objects.
     L = 1;
     R = 2;
 
@@ -35,6 +35,6 @@ function [carList, road] = getCars(density, lanes, roadLen, randomPos, randomLan
 
         % add car to list
         rgb = rand(1,3);
-        carList = [carList struct('id', j, 'lane', lane, 'pos', pos, 'speed', 0, 'pTroedler', rand()*troedelMax, 'color', rgb, 'plot', 0)];
+        carList = [carList struct('id', j, 'lane', lane, 'pos', pos, 'speed', 0, 'pHesitation', rand()*pHesitationMax, 'color', rgb, 'plot', 0)];
     end
 end

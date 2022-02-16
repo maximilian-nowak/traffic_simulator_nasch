@@ -1,10 +1,12 @@
-function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, RandomLane, troedelMax)
-%doubleLaneTraffic Verkehrssimulation nach Nagel-Schreckenberg.
+function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, RandomLane, pHesitationMax)
+%doubleLaneTraffic traffic simulation as per nagel-schreckenberg model
+%(double lane).
 
-    L = 1;
-    R = 2;
+    L = 1;  % define lane 1 as left
+    R = 2;  % define lane 2 as right
+    
     cellToKmh = 27;  % 1 = 27 km/h
-    [cars, road] = getCars(density, lanes, roadLen, randomPos, RandomLane, troedelMax);
+    [cars, road] = getCars(density, lanes, roadLen, randomPos, RandomLane, pHesitationMax);
     roadGap = roadLen * (2/35);  %dependant on ratio to road length
 
     displayRoadMap = true;
@@ -12,11 +14,11 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
     roadMapTrace(1:2, :) = road(1:2, :);
 
     % -- Initialize plot --
-    figure('Name','Angewandte Mathematik: Abschlussprojekt','NumberTitle','off')
-    title({'Verkehrssimulation nach Nagel-Schreckenberg-Modell'},{'(zweispuriger Verkehr)'});
-    description = ['Zellen=', num2str(roadLen), ', Runden=', num2str(rounds),', Dichte=', num2str(density), ', pmax=', num2str(troedelMax), ', vmax=', num2str(vmax)];
+    figure('Name','Cellular Automaton','NumberTitle','off')
+    title({'Traffic simulation as per Nagel-Schreckenberg model'},{'(double lane)'});
+    description = ['cells=', num2str(roadLen), ', rounds=', num2str(rounds),', density=', num2str(density), ', pmax=', num2str(pHesitationMax), ', vmax=', num2str(vmax)];
 
-    xlim([0,  roadLen]);
+    xlim([0, roadLen]);
     ylim([-(roadLen), roadLen]);
     hold on
     plot([0, roadLen], [0, 0], '--k')
@@ -29,7 +31,7 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
         end
         cars(j).plot = plot(cars(j).pos -0.5, y, 'Color', cars(j).color, 'marker', 'o', 'LineWidth', 1);
         cars(j).plot.DataTipTemplate.DataTipRows(1) = dataTipTextRow('Id', repmat({cars(j).id},numel('XData'),1));
-        cars(j).plot.DataTipTemplate.DataTipRows(2) = dataTipTextRow('P(tr)', repmat({round(cars(j).pTroedler,2)},numel('XData'),1));
+        cars(j).plot.DataTipTemplate.DataTipRows(2) = dataTipTextRow('P(tr)', repmat({round(cars(j).pHesitation,2)},numel('XData'),1));
         cars(j).plot.ZData = cars(j).speed * cellToKmh;
         cars(j).plot.DataTipTemplate.DataTipRows(3) = dataTipTextRow('km/h', 'ZData');
     end
@@ -38,19 +40,19 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
     xlabel({description});
     yticklabels({''});
     %---------------------
-
-    disp("-- Taste drücken um Simulation zu starten --")
+    
+    disp("-- Press key to start simulation --")
     pause();
 
     for n=1:rounds
         newPositions = zeros(2, roadLen);
         for j = 1:length(cars)
-            % -- Schritt 1: Erhöhe Geschwindigkeit wenn < vmax
+            % -- step 1: increase speed if speed < vmax
             if cars(j).speed < vmax 
                 cars(j).speed = cars(j).speed + 1;
             end
 
-            % -- Schritt 2: Verringere Geschwindigkeit auf Größe der Lücke
+            % -- step 2: slow down if gap is not big enough
             reduceSpeedTo = cars(j).speed;
             oldLane = cars(j).lane;
             laneSwitchingAllowed = true;
@@ -69,8 +71,10 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
                             reduceSpeedTo = (s-1);
                             break;
                         else
-                            cars(j).lane = L;
-                            laneSwitchingAllowed = false;
+                            if laneSwitchingAllowed
+                                cars(j).lane = L;
+                                laneSwitchingAllowed = false;
+                            end
                         end
                     end
                 else
@@ -80,17 +84,18 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
                     end
                     if s == cars(j).speed && ~road(R, curPos) && ~road(R, nextPos) && laneSwitchingAllowed
                         cars(j).lane = R;
+                        laneSwitchingAllowed = false;
                     end
                 end
             end
             cars(j).speed = reduceSpeedTo;
 
-            % -- 3. Schritt: Trödelwahrscheinlichkeit
-            if cars(j).speed > 0 && cars(j).pTroedler > rand()
+            % -- step 3: factor in hesitation probability
+            if cars(j).speed > 0 && cars(j).pHesitation > rand()
                 cars(j).speed = cars(j).speed - 1;
             end
 
-            % -- 4. Schritt: Bewege alle Autos an ihre neue Position
+            % -- step 4: move all cars to new position
 %             road(oldLane, cars(j).pos) = 0;
             if cars(j).pos + cars(j).speed > roadLen
                 cars(j).pos = cars(j).pos +  cars(j).speed - roadLen;
@@ -117,9 +122,9 @@ function doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, Ran
     end
     if displayRoadMap
     %     pause();
-        figure('Name','Angewandte Mathematik: Abschlussprojekt','NumberTitle','off');
+        figure('Name','Cellular Automaton','NumberTitle','off');
         imshow(~roadMapTrace, 'InitialMagnification', 'fit');
-        title(['Verkehrsverlauf:', {['(', description, ')']}, {''}]);
+        title(['traffic progression map:', {['(', description, ')']}, {''}]);
         % resized = imresize(~roadMapTrace, 9);
         % imwrite(resized,'roadMapTrace.png')
     end

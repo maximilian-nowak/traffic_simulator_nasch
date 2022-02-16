@@ -1,21 +1,33 @@
-%Hauptskript zur Steuerung der Nagel-Schreckenberg Simulation.
+%main script
+% set all parameters here
 
 close all
 clear all
 
-vmax = 5;  % 5:=135 km/h
+% prompt parameter input routine
 % [density, roadLen, lanes, rounds, randomPos] = inputParams();
-density = 35;
+
+vmax = 7;  % 5:=135 km/h
+
+% single lane
+lanes = 1;
+density = 40;
+
+% double lane
+% lanes = 2;
+% density = 100;
+
+
 roadLen = 100;
-lanes = 2;
 rounds = 100;
-randomPos = false;
-troedelMax = 0.3;
+randomPos = true;
+pHesitation = 0.30;
 randomLane = randomPos;
 
 if lanes == 2
-    doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, randomLane, troedelMax);
+    doubleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, randomLane, pHesitation);
 else
-    singleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, troedelMax);
+    singleLaneTraffic(vmax, lanes, density, roadLen, rounds, randomPos, pHesitation);
 end
+
 
